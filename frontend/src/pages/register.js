@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import axios from 'axios';
 
 export default function Register() {
@@ -16,82 +16,83 @@ export default function Register() {
     return email.match(/^([\w.%+-]+)@([\w-]+\.)+([\w]{2,})$/i);
   };
 
-  const sendOTP = async () => {
+  const sendOTP = useCallback(async () => {
     setLoadingOTP(true);
     try {
       await axios.post('http://localhost:3000/api/users/send-otp', { email });
       setMessage('OTP sent to your email.');
-    } catch (error) {
+    } catch {
       setMessage('Failed to send OTP. Try again.');
     } finally {
       setLoadingOTP(false);
     }
-  };
-
+  }, [email]);
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-
+    setMessage('');
+  
+    // Added validation for empty fields
     if (!email || !district || !city || !otp) {
-      setMessage("All fields including OTP are required.");
+      setMessage('All fields including OTP are required.');
       return;
     }
     if (!validateEmail(email)) {
-      setMessage("Please enter a valid email.");
+      setMessage('Please enter a valid email.');
       return;
     }
-
+  
     setLoadingRegister(true);
     try {
-      const response = await axios.post("http://localhost:3000/api/users/verify-otp", { email, otp });
+      const response = await axios.post('http://localhost:3000/api/users/verify-otp', { email, otp });
       if (response.data === 'OTP verified') {
-        const registerResponse = await axios.post("http://localhost:3000/api/users/add", { email, location: `${city}, ${district}` });
+        const registerResponse = await axios.post('http://localhost:3000/api/users/add', { email, location: `${city}, ${district}` });
         if (registerResponse.status === 201) {
-          setMessage("User registered successfully!");
-          setEmail("");
-          setDistrict("");
-          setCity("");
-          setOtp("");
+          setMessage('User registered successfully!');
+          setEmail('');
+          setDistrict('');
+          setCity('');
+          setOtp('');
         } else {
-          setMessage("Failed to register user. Try again.");
+          setMessage('Failed to register user. Try again.');
         }
       } else {
-        setMessage("Invalid or expired OTP.");
+        setMessage('Invalid or expired OTP.');
       }
-    } catch (error) {
-      setMessage("Server error. Please try again later.");
+    } catch {
+      setMessage('Server error. Please try again later.');
     } finally {
       setLoadingRegister(false);
     }
   };
-
+  
   const handleUnsubscribe = async () => {
     if (!email || !otp) {
-      setMessage("Email and OTP are required to unsubscribe.");
+      setMessage('Email and OTP are required to unsubscribe.');
       return;
     }
-
+  
     setLoadingUnsubscribe(true);
     try {
-      const otpResponse = await axios.post("http://localhost:3000/api/users/verify-otp", { email, otp });
+      const otpResponse = await axios.post('http://localhost:3000/api/users/verify-otp', { email, otp });
       if (otpResponse.data === 'OTP verified') {
-        const response = await axios.post("http://localhost:3000/api/users/unsubscribe", { email, otp });
+        const response = await axios.post('http://localhost:3000/api/users/unsubscribe', { email, otp });
         if (response.status === 200) {
-          setMessage("Unsubscribed successfully.");
-          setEmail("");
-          setOtp("");
+          setMessage('Unsubscribed successfully.');
+          setEmail('');
+          setOtp('');
         } else {
-          setMessage("Failed to unsubscribe.");
+          setMessage('Failed to unsubscribe.');
         }
       } else {
-        setMessage("Invalid or expired OTP.");
+        setMessage('Invalid or expired OTP.');
       }
-    } catch (error) {
-      setMessage("Server error. Please try again later.");
+    } catch {
+      setMessage('Server error. Please try again later.');
     } finally {
       setLoadingUnsubscribe(false);
     }
-  };
+  };  
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-300 to-blue-600 text-white">
@@ -111,7 +112,7 @@ export default function Register() {
           </form>
         ) : (
           <div className="flex flex-col space-y-4">
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400" required />         
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400" required />
             <input type="text" placeholder="OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400" required />
             <button type="button" onClick={sendOTP} className="bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg">{loadingOTP ? 'Sending OTP...' : 'Send OTP'}</button>
             <button onClick={handleUnsubscribe} className="bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg">{loadingUnsubscribe ? 'Unsubscribing...' : 'Unsubscribe'}</button>

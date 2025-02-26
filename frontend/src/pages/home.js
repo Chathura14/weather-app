@@ -1,8 +1,7 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import Link from 'next/link';
 import axios from 'axios';
+import Image from 'next/image';
 
 export default function Home() {
     const [weather, setWeather] = useState(null);
@@ -13,12 +12,8 @@ export default function Home() {
     const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
     const NEWS_API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY;
 
-    useEffect(() => {
-        fetchWeather();
-        fetchNews();
-    }, []);
-
-    const fetchWeather = async () => {
+    // Use useCallback to memoize the fetchWeather function
+    const fetchWeather = useCallback(async () => {
         try {
             const res = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${API_KEY}`);
             setWeather(res.data);
@@ -26,18 +21,18 @@ export default function Home() {
         } catch (error) {
             console.error('Error fetching weather:', error);
         }
-    };
+    }, [location, API_KEY]);
 
-    const fetchForecast = async () => {
+    // Use useCallback to memoize the fetchForecast function
+    const fetchForecast = useCallback(async () => {
         try {
             const res = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${location}&units=metric&appid=${API_KEY}`);
             const forecasts = res.data.list;
 
-            // Group forecasts by day using a specific date format (YYYY-MM-DD)
             const groupedForecasts = {};
             forecasts.forEach((forecast) => {
                 const date = new Date(forecast.dt * 1000);
-                const formattedDate = date.toISOString().split('T')[0]; // Formats the date as 'YYYY-MM-DD'
+                const formattedDate = date.toISOString().split('T')[0];
 
                 if (!groupedForecasts[formattedDate]) {
                     groupedForecasts[formattedDate] = [];
@@ -45,30 +40,34 @@ export default function Home() {
                 groupedForecasts[formattedDate].push(forecast);
             });
 
-            // Get the first forecast for each of the next 7 unique days
             const forecastDays = Object.keys(groupedForecasts).slice(0, 7).map(date => {
-                return groupedForecasts[date][0]; // Get the forecast for the first time of each day
+                return groupedForecasts[date][0];
             });
 
-            setForecast(forecastDays); // Set the grouped forecast data
+            setForecast(forecastDays);
         } catch (error) {
             console.error('Error fetching forecast:', error);
         }
-    };
+    }, [location, API_KEY]);
 
-
-    const fetchNews = async () => {
+    // Use useCallback to memoize the fetchNews function
+    const fetchNews = useCallback(async () => {
         setLoadingNews(true);
         try {
             const res = await axios.get(`https://newsapi.org/v2/top-headlines?q=weather&apiKey=${NEWS_API_KEY}`);
-            setNews(res.data.articles.slice(0, 7)); // Get top 7 news articles
+            setNews(res.data.articles.slice(0, 7));
         } catch (error) {
             console.error('Error fetching news:', error);
             setNews([]);
         } finally {
             setLoadingNews(false);
         }
-    };
+    }, [NEWS_API_KEY]);
+
+    useEffect(() => {
+        fetchWeather();
+        fetchNews();
+    }, [fetchWeather, fetchNews]); // Added memoized functions as dependencies
 
     return (
         <div className="min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 text-white p-6">
@@ -102,9 +101,11 @@ export default function Home() {
                             {forecast.map((day, index) => (
                                 <div key={index} className="bg-gray-800 text-white p-6 rounded-xl shadow-lg text-center transition-transform transform hover:scale-110 hover:shadow-2xl duration-300 ease-in-out">
                                     <p className="font-semibold">{new Date(day.dt_txt).toLocaleDateString()}</p>
-                                    <img
+                                    <Image
                                         src={`https://openweathermap.org/img/wn/${day.weather[0].icon}.png`}
                                         alt={day.weather[0].description}
+                                        width={50}
+                                        height={50}
                                         className="mx-auto my-2"
                                     />
                                     <p>{day.weather[0].description}</p>
@@ -134,7 +135,13 @@ export default function Home() {
                                 <a href={article.url} target="_blank" className="text-2xl font-semibold text-blue-700 hover:underline">{article.title}</a>
                                 <p className="text-gray-700 mt-2">{article.description}</p>
                                 {article.urlToImage && (
-                                    <img src={article.urlToImage} alt={article.title} className="mt-2 w-full h-48 object-cover rounded-lg" />
+                                    <Image
+                                        src={article.urlToImage}
+                                        alt={article.title}
+                                        width={500}
+                                        height={300}
+                                        className="mt-2 w-full object-cover rounded-lg"
+                                    />
                                 )}
                             </div>
                         ))}
