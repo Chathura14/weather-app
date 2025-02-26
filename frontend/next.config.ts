@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['openweathermap.org'], 
+    domains: ['openweathermap.org'],
+    unoptimized: true, 
   },
   async redirects() {
     return [
@@ -13,7 +14,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  output: 'export',  
+  output: 'export',
 };
 
 export default nextConfig;
