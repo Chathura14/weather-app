@@ -12,7 +12,14 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 });
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://weathr-application.netlify.app", 
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization",
+    credentials: true,
+  })
+);
 
 app.use('/api/users', userRoutes);
 
