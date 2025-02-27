@@ -19,7 +19,7 @@ export default function Register() {
   const sendOTP = useCallback(async () => {
     setLoadingOTP(true);
     try {
-      await axios.post('weather-app-production-f6c7.up.railway.app/api/users/send-otp', { email });
+      await axios.post('https://weather-app-production-f6c7.up.railway.app/api/users/send-otp', { email });
       setMessage('OTP sent to your email.');
     } catch {
       setMessage('Failed to send OTP. Try again.');
@@ -44,9 +44,9 @@ export default function Register() {
   
     setLoadingRegister(true);
     try {
-      const response = await axios.post('weather-app-production-f6c7.up.railway.app/api/users/verify-otp', { email, otp });
+      const response = await axios.post('https://weather-app-production-f6c7.up.railway.app/api/users/verify-otp', { email, otp });
       if (response.data === 'OTP verified') {
-        const registerResponse = await axios.post('weather-app-production-f6c7.up.railway.app/api/users/add', { email, location: `${city}, ${district}` });
+        const registerResponse = await axios.post('https://weather-app-production-f6c7.up.railway.app/api/users/add', { email, location: `${city}, ${district}` });
         if (registerResponse.status === 201) {
           setMessage('User registered successfully!');
           setEmail('');
@@ -74,9 +74,9 @@ export default function Register() {
   
     setLoadingUnsubscribe(true);
     try {
-      const otpResponse = await axios.post('weather-app-production-f6c7.up.railway.app/api/users/verify-otp', { email, otp });
+      const otpResponse = await axios.post('https://weather-app-production-f6c7.up.railway.app/api/users/verify-otp', { email, otp });
       if (otpResponse.data === 'OTP verified') {
-        const response = await axios.post('weather-app-production-f6c7.up.railway.app/api/users/unsubscribe', { email, otp });
+        const response = await axios.post('https://weather-app-production-f6c7.up.railway.app/api/users/unsubscribe', { email, otp });
         if (response.status === 200) {
           setMessage('Unsubscribed successfully.');
           setEmail('');
